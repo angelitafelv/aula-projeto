@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arrecadação Escolar</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Estilos gerais para uma aparência mais divertida e organizada */
+    :root {
+      --primary-color: #4CAF50;
+      --secondary-color: #FFCA28;
+      --accent-color: #0288D1;
+      --text-color: #333;
+      --background-color: #F5F5F5;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background-color: var(--background-color);
+      margin: 0;
+      padding: 0;
+      color: var(--text-color);
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+      color: white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo {
+      font-size: 2.5rem;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid white;
+      color: white;
+    }
+
+    .btn-outline:hover {
+      background: white;
+      color: var(--primary-color);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s;
+    }
+
+    .stat:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+
+    .stat-label {
+      font-size: 1rem;
+      color: var(--text-color);
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .input {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .modal {
+      border: none;
+      border-radius: 10px;
+      background: white;
+      padding: 2rem;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .pagamentos {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .btn-pix { background-color: #26A69A; color: white; }
+    .btn-credito { background-color: #0288D1; color: white; }
+    .btn-debito { background-color: #FBC02D; color: white; }
+
+    .btn-pix:hover, .btn-credito:hover, .btn-debito:hover {
+      filter: brightness(1.1);
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="logo">🎒</div>
+      <div>
+        <h1>Arrecadação Escolar</h1>
+        <small>Transparência • Participação • Impacto</small>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btnAdmin" class="btn btn-outline">Admin</button>
+      <button id="btnExport" class="btn btn-outline">Exportar</button>
+      <label class="import-label">
+        Importar <input id="fileImport" type="file" accept="application/json" hidden />
+      </label>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="stats" id="stats">
+      <div class="stat">
+        <div class="stat-value" id="statEventos">0</div>
+        <div class="stat-label">Eventos</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="statArrecadado">R$ 0,00</div>
+        <div class="stat-label">Arrecadado Total</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="statMedia">R$ 0,00</div>
+        <div class="stat-label">Média por Doação</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="statDoadores">0</div>
+        <div class="stat-label">Doações</div>
+      </div>
+    </section>
+
+    <section class="toolbar">
+      <button id="btnNovoEvento" class="btn">➕ Novo Evento</button>
+      <input id="busca" class="input" placeholder="🔍 Buscar doações por nome..." />
+    </section>
+
+    <section id="listaEventos" class="grid"></section>
+  </main>
+
+  <!-- Modal Novo Evento -->
+  <dialog id="modalEvento" class="modal">
+    <form method="dialog" class="card">
+      <h2>🎉 Novo Evento</h2>
+      <label>Nome do Evento:</label>
+      <input id="nomeEvento" class="input" placeholder="Ex: Festa Junina" required />
+      <label>Meta (R$):</label>
+      <input id="metaEvento" type="number" class="input" placeholder="Ex: 1000" required />
+      <menu>
+        <button value="cancelar" class="btn btn-outline">Cancelar</button>
+        <button id="salvarEvento" class="btn">Salvar</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- Modal Doação -->
+  <dialog id="modalDoacao" class="modal">
+    <form method="dialog" class="card">
+      <h2>Doar para <span id="nomeEventoDoacao"></span> 💸</h2>
+      <label>Valor (R$):</label>
+      <input type="number" id="valorDoacao" class="input" placeholder="Ex: 50" required />
+      <div class="pagamentos">
+        <button type="button" class="btn btn-pix">Pix</button>
+        <button type="button" class="btn btn-credito">Crédito</button>
+        <button type="button" class="btn btn-debito">Débito</button>
+      </div>
+      <menu>
+        <button value="cancelar" class="btn btn-outline">Cancelar</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
+
