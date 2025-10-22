@@ -244,8 +244,29 @@
     </form>
   </dialog>
 
-  <script src="script.js"></script>
+  <!-- Firebase Initialization -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7Wmzdc9IkwIE1l9WRQZhvscgKhuqMKwo",
+      authDomain: "apptcc-cb01f.firebaseapp.com",
+      projectId: "apptcc-cb01f",
+      storageBucket: "apptcc-cb01f.firebasestorage.app",
+      messagingSenderId: "1045189305720",
+      appId: "1:1045189305720:web:abba3a2300b2431ae9948d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // Expondo database para o script.js
+    window.database = database;
+    console.log("Firebase inicializado ✅");
+  </script>
+
+  <script src="script.js" type="module"></script>
 </body>
 </html>
-
 

@@ -1,12 +1,26 @@
-// Estado do app
+import { ref, onValue, set, push, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const database = window.database;
+if (!database) {
+  console.error("Firebase database não inicializado! Verifique o HTML.");
+  return;
+}
+
 let eventos = [];
-if (localStorage.getItem("eventos")) eventos = JSON.parse(localStorage.getItem("eventos"));
 let isAdmin = false;
 
-// Salvar localStorage
-function salvarLocal() {
-  localStorage.setItem("eventos", JSON.stringify(eventos));
-}
+// Carregar eventos do Firebase
+const eventosRef = ref(database, 'eventos');
+onValue(eventosRef, (snapshot) => {
+  const data = snapshot.val();
+  if (data) {
+    eventos = Object.values(data); // Converte objeto do Firebase em array
+  } else {
+    eventos = [];
+  }
+  renderEventos();
+  console.log("Eventos carregados:", eventos);
+});
 
 // Renderiza lista de eventos
 function renderEventos(eventosFiltrados = eventos) {
@@ -16,8 +30,8 @@ function renderEventos(eventosFiltrados = eventos) {
     return;
   }
   lista.innerHTML = "";
-  
-  if (eventosFiltrados.length === 0) {
+
+  if (!Array.isArray(eventosFiltrados) || eventosFiltrados.length === 0) {
     lista.innerHTML = "<p style='text-align: center;'>Nenhum evento encontrado. 😕</p>";
     return;
   }
@@ -59,13 +73,9 @@ function buscarEventos() {
   }
 
   const termoBusca = inputBusca.value.trim().toLowerCase();
-  console.log("Termo de busca:", termoBusca); // Log para depuração
-
   const eventosFiltrados = eventos.filter((evento) =>
     evento.nome.toLowerCase().includes(termoBusca)
   );
-  console.log("Eventos filtrados:", eventosFiltrados); // Log para depuração
-
   renderEventos(eventosFiltrados);
 }
 
@@ -79,12 +89,15 @@ document.getElementById("salvarEvento").addEventListener("click", () => {
     alert("Preencha nome e meta válidos!");
     return;
   }
-  eventos.push({ nome, meta, arrecadado: 0, doacoes: [], admin: isAdmin });
-  salvarLocal();
-  renderEventos();
-  modalEvento.close();
-  document.getElementById("nomeEvento").value = "";
-  document.getElementById("metaEvento").value = "";
+  const novoEvento = { nome, meta, arrecadado: 0, doacoes: [], admin: isAdmin };
+  const novoEventoRef = push(eventosRef);
+  set(novoEventoRef, novoEvento)
+    .then(() => {
+      document.getElementById("nomeEvento").value = "";
+      document.getElementById("metaEvento").value = "";
+      modalEvento.close();
+    })
+    .catch((error) => console.error("Erro ao adicionar evento:", error));
 });
 
 // Modal doação
@@ -102,9 +115,10 @@ document.getElementById("listaEventos").addEventListener("click", (e) => {
     modalDoacao.showModal();
   }
   if (e.target.classList.contains("btn-excluir") && confirm("Deseja excluir?")) {
-    eventos.splice(index, 1);
-    salvarLocal();
-    renderEventos();
+    const eventoId = eventos[index].id; // Supondo que 'id' foi adicionado ao evento
+    remove(ref(database, `eventos/${eventoId}`))
+      .then(() => console.log("Evento excluído"))
+      .catch((error) => console.error("Erro:", error));
   }
   if (e.target.classList.contains("btn-editar")) {
     const ev = eventos[index];
@@ -113,8 +127,9 @@ document.getElementById("listaEventos").addEventListener("click", (e) => {
     if (nn && nm) {
       ev.nome = nn;
       ev.meta = parseFloat(nm);
-      salvarLocal();
-      renderEventos();
+      set(ref(database, `eventos/${ev.id}`), ev)
+        .then(() => console.log("Evento atualizado"))
+        .catch((error) => console.error("Erro ao editar:", error));
     }
   }
 });
@@ -126,12 +141,15 @@ function processarDoacao(tipo) {
     alert("Valor inválido!");
     return;
   }
-  eventos[eventoAtualIndex].arrecadado += val;
-  eventos[eventoAtualIndex].doacoes.push({ valor: val, tipo });
-  salvarLocal();
-  renderEventos();
-  modalDoacao.close();
-  alert(`Obrigado pela doação de R$ ${val.toFixed(2)} via ${tipo} 💙`);
+  const eventoAtual = eventos[eventoAtualIndex];
+  eventoAtual.arrecadado += val;
+  eventoAtual.doacoes.push({ valor: val, tipo });
+  set(ref(database, `eventos/${eventoAtual.id}`), eventoAtual)
+    .then(() => {
+      modalDoacao.close();
+      alert(`Obrigado pela doação de R$ ${val.toFixed(2)} via ${tipo} 💙`);
+    })
+    .catch((error) => console.error("Erro ao atualizar doação:", error));
 }
 
 // Botões de pagamento
@@ -174,9 +192,12 @@ document.getElementById("fileImport").addEventListener("change", (e) => {
   reader.onload = () => {
     try {
       eventos = JSON.parse(reader.result);
-      salvarLocal();
-      renderEventos();
-      alert("Importação concluída ✅");
+      const eventosRef = ref(database, 'eventos');
+      set(eventosRef, eventos)
+        .then(() => {
+          alert("Importação concluída ✅");
+        })
+        .catch((error) => console.error("Erro ao importar:", error));
     } catch {
       alert("Arquivo inválido!");
     }
@@ -186,7 +207,6 @@ document.getElementById("fileImport").addEventListener("change", (e) => {
 
 // Configura a busca
 document.getElementById("busca").addEventListener("input", buscarEventos);
-
 
 // Render inicial
 renderEventos();
